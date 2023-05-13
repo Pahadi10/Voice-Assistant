@@ -1,0 +1,40 @@
+Commands for the Voice Assistant are:
+
+Basic Conversation:
+* How are you? / How you doing? / What is going on?
+* What is time?
+* who are you?/ what's your name?/ tell me about you?
+
+
+Basic Functionalities:
+* search 'anything'
+* play music (from offline directory)
+* play 'anything from youtube'
+* open 'application name' ( such as: code, chrome, notepad, word, excel, powerpoint)
+* close 'application name'
+* open 'website name'
+* send a mail(to any email adress)
+* create note
+* show note
+* Tell some news(Speaks latest news headlines)
+* what is 'any question'(do basic mathematical problems as well as wikipedia)
+* who is 'any person'
+* tell me about 'any person, place or noun'
+* where is 'any location'
+* my location (tells your geolocation based on your ip adress)
+* weather (of any city)
+* print calendaer (for any year)
+* crack joke (programmers jokes
+
+
+Basic Assistant Functionalities:
+//No more working * stop/ sleep (puts assistant in sleep mode)
+//No more working * start (awake assistant from sleep mode)
+* exit (exits assistant)
+
+
+Basic OS Functionalities:
+* shutdown/ turn off (shut down computer)
+* restart (restart computer)
+* log out (log out the current user)
+* empty recycle bin (empty recycle bin)
