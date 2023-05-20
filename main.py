@@ -20,27 +20,22 @@ import sys
 import tkinter as tk
 from PIL import Image, ImageTk
 from tkinter.font import Font
-# import threading
+import yaml
+from fuzzywuzzy import fuzz
+import re
 
 engine = pyttsx3.init('sapi5')
 voices = engine.getProperty('voices')
-# print(voices[2].id)
 engine.setProperty('voice', voices[3].id)
 engine.setProperty('rate', 150)
 recognizer = sr.Recognizer()
 
-
 def speak(audio):
     engine.say(audio)
-    # print(audio)
     output_text.insert(tk.END, audio + '\n', "custom_tag")
     output_text.update()
     output_text.see('end')
     engine.runAndWait()
-
-# def speak_in_thread(audio):
-#     thread = threading.Thread(target=speak, args=(audio,))
-#     thread.start()
 
 def wishMe():
     hour = int(datetime.datetime.now().hour)
@@ -57,31 +52,33 @@ def wishMe():
     speak("I am Voice Assistant Please tell me how may I help you?")
 
 
-def takeCommand():
-    r = sr.Recognizer()
-    with sr.Microphone() as source:
-        # print("Listening...")
-        output_text.insert(tk.END, "Listening..." + '\n', "custom_tag")
+def takeCommand(text=None):
+    if text:
+        query = text
+        output_text.insert(tk.END, "You said: " + query + '\n', "custom_tag")
         output_text.update()
-        winsound.Beep(250, 500)
-        r.energy_threshold = 500
-        r.adjust_for_ambient_noise(source, duration=0.5)
-        r.pause_threshold = 1
-        audio = r.listen(source)
+        return query
+    else:
+        r = sr.Recognizer()
+        with sr.Microphone() as source:
+            output_text.insert(tk.END, "Listening..." + '\n', "custom_tag")
+            output_text.update()
+            winsound.Beep(250, 500)
+            r.energy_threshold = 500
+            r.adjust_for_ambient_noise(source, duration=0.5)
+            r.pause_threshold = 1
+            audio = r.listen(source)
 
-    try:
-        # print("Recognizing...")
-        output_text.insert(tk.END, "Recognizing..." + '\n', "custom_tag")
-        output_text.update()
-        query = r.recognize_google(audio, language='en-in')
-        # print(f"You said: {query}\n")
-        output_text.insert(tk.END, "You said: "+query + '\n', "custom_tag")
-        output_text.update()
-    except Exception as e:
-        speak("Say that again please")
-        return "None"
+        try:
+            output_text.insert(tk.END, "Recognizing..." + '\n', "custom_tag")
+            output_text.update()
+            query = r.recognize_google(audio, language='en-in')
+            output_text.insert(tk.END, "You said: " + query + '\n', "custom_tag")
+            output_text.update()
+        except Exception as e:
+            speak("Say that again, please")
+            query = "None"
     return query
-
 
 def Email(to, content):
     try:
@@ -92,21 +89,30 @@ def Email(to, content):
         server.sendmail('teranuman@gmail.com', to, content)
         server.close()
     # done = True
-    except exception as e:
+    except Exception as e:
         print(e)
 
 
 def sendEmail():
-            try:
-                speak("What should I say?")
-                content = takeCommand()
-                speak("Sending mail on the above E-Mail address")
-                to = get_input1()
-                Email(to, content)
-                speak("Email has been sent !")
-            except Exception as e:
-                print(e)
-                speak("I am not able to send this email")
+    try:
+        speak("What should I say?")
+        content = takeCommand()
+        speak("Please enter the email address and press send key:")
+        input_text.unbind("<Return>")
+        clearinp.configure(state='normal')  # Enable the "Send" button
+        clearinp.configure(command=lambda: get_email_address(content))  # Update the command to call get_email_address
+
+    except Exception as e:
+        print(e)
+        speak("I am not able to send this email")
+
+def get_email_address(content):
+    email_address = get_input1().lower()
+    speak("Sending mail to " + email_address)
+    Email(email_address, content)
+    speak("Email has been sent!")
+    clear_inbx()
+    input_text.bind("<Return>", on_enter_key_press)
 
 
 def create_note():
@@ -133,7 +139,6 @@ def create_note():
             recognizer = sr.Recognizer()
             speak("I did't understood")
 
-
 def show_note():
             speak("What is name of the note file?")
             nf = str(takeCommand())
@@ -143,7 +148,6 @@ def show_note():
             speak("Showing Notes")
             a = (file.read())
             speak(a)
-
 
 def news_listen():
     try:
@@ -163,14 +167,12 @@ def news_listen():
     except Exception as e:      
         print(str(e))
 
-
 def how_are_you():
     howareyou = ["I am good", "I am doing good", "I am doing fine today", "I am fine", "Can't be better", "I am hanging in there", "Can't complain", "Pretty good"]
     a = random.randint(0, 7)
     response_1 = str(howareyou[a])
     speak(response_1)
     speak("How about you?")
-
 
 def shutdown():
     speak("Good Bye... Your system is going to shut down in a bit")
@@ -186,17 +188,15 @@ def logout():
     speak("You are about to log out")
     return os.system("shutdown -l")
 
-
 def wiki(query):
-        # speak('Searching Wikipedia...')
+
         query = query.replace("wikipedia", "")
         try:
             results = wikipedia.summary(query, sentences=2)
-            # speak("According to Wikipedia...")
+
             speak(results)
         except exception as e:
             print(e)
-
 
 def search(query):
         query = query.replace("search", "")
@@ -204,7 +204,6 @@ def search(query):
             web.open(f"https://www.google.com/search?q={query}&rlz=1C1UEAD_enIN1028IN1028&oq=hi&aqs=chrome..69i57j0i67i131i433j46i67i199i465j0i67l2j69i61l3.1343j0j7&sourceid=chrome&ie=UTF-8")
         except exception as e:
             print(e)
-
 
 def printcalender():
     speak("Say the year you want calendar for: ")
@@ -214,13 +213,11 @@ def printcalender():
     except exception as e:
         print(e)
 
-
 def playYT(query):
             query = query.replace('play ', '')
             speak('playing ' + query)
             misc.playonyt(query)
             print(query)
-
 
 def playMusic():
     try:
@@ -231,7 +228,6 @@ def playMusic():
             os.startfile(os.path.join(music_dir, songs[b]))
     except Exception as e:
         print(e)
-
 
 def openWebsite(query):
         try:
@@ -248,7 +244,6 @@ def openWebsite(query):
         except exception as e:
             print(e)
 
-
 def searchlocation(query):
     try:
             query = query.replace("where is", "")
@@ -258,7 +253,6 @@ def searchlocation(query):
     except exception as e:
         print(e)
 
-
 def mylocation():
     try:
         g = geocoder.ip('')
@@ -266,7 +260,6 @@ def mylocation():
         return loc
     except exception as e:
         print(e)
-
 
 def weather(city):
     if city == "None":
@@ -311,7 +304,6 @@ def close_app(app):
     except exception as e:
         print(e)
 
-
 def question(question):
     try:
         app_id = 'WW6W3T-3LGT7WLPGA'
@@ -322,152 +314,225 @@ def question(question):
     except:
         wiki(question)
         return
-
-
-def on_button_click():
-    query = takeCommand().lower()
     
-    if 'how are you' in query or 'how you doing' in query or 'what is going on' in query:
+def load_conversations(filename):
+    with open(filename, 'r') as file:
+        data = yaml.safe_load(file)
+        return data['conversations']
+    
+folder_path = 'Voice Assistant/conversations'
+
+filenames = [
+    os.path.join(folder_path, 'ai.yml'),
+    os.path.join(folder_path, 'botprofile.yml'),
+    os.path.join(folder_path, 'computers.yml'),
+    os.path.join(folder_path, 'emotion.yml'),
+    os.path.join(folder_path, 'food.yml'),
+    os.path.join(folder_path, 'gossip.yml'),
+    os.path.join(folder_path, 'greetings.yml'),
+    os.path.join(folder_path, 'health.yml'),
+    os.path.join(folder_path, 'history.yml'),
+    os.path.join(folder_path, 'humor.yml'),
+    os.path.join(folder_path, 'literature.yml'),
+    os.path.join(folder_path, 'money.yml'),
+    os.path.join(folder_path, 'movies.yml'),
+    os.path.join(folder_path, 'politics.yml'),
+    os.path.join(folder_path, 'psychology.yml'),
+    os.path.join(folder_path, 'science.yml'),
+    os.path.join(folder_path, 'sports.yml'),
+    os.path.join(folder_path, 'trivia.yml'),
+    os.path.join(folder_path, 'basic.yml'),
+    os.path.join(folder_path, 'oneword.yml'),
+
+]
+
+conversations = []
+
+for filename in filenames:
+    conv = load_conversations(filename)
+    conversations.extend(conv)
+
+
+
+def get_response(query, threshold=60):
+    best_matches = []
+    best_score = 0
+
+    for i, conv in enumerate(conversations):
+        for j, utterance in enumerate(conv):
+            score = fuzz.token_sort_ratio(query, utterance)
+            if score > best_score:
+                best_matches = [(i, j)]
+                best_score = score
+            elif score == best_score:
+                best_matches.append((i, j))
+
+    filtered_matches = [(i, j) for i, j in best_matches if best_score >= threshold]
+
+    if filtered_matches:
+        random_match = random.choice(filtered_matches)
+        matching_conversation = conversations[random_match[0]]
+        response_index = random_match[1] + 1
+        if response_index < len(matching_conversation):
+            response = matching_conversation[response_index]
+            return response
+
+    return None
+
+
+def get_random_joke_from_humor_yml():
+    joke_conversations = [conv[1] for conv in conversations if 'tell me a joke' in conv[0]]
+    if joke_conversations:
+        return random.choice(joke_conversations)
+    return None
+
+
+def on_speak_click():
+        
+        query = takeCommand().lower()
+
+        response = get_response(query)
+    
+        if 'how are you' in query or 'how you doing' in query or 'what is going on' in query:
            how_are_you()
-           
     
-    elif 'fine' in query or 'good' in query or 'great' in query or 'wonderful' in query or 'awesome' in query:
-        speak("I am happy listening that")
+        elif 'fine' in query or 'good' in query or 'great' in query or 'wonderful' in query or 'awesome' in query:
+            speak("I am happy listening that")
     
-    elif 'thank you' in query or 'thanks' in query:
+        elif 'thank you' in query or 'thanks' in query:
             speak("It's my pleasure!")
 
-    elif 'you are ' in query:
+        elif 'you are ' in query:
             speak("It's okay! I will take it as a compliment.")
 
-    elif 'exit' in query:
+        elif 'exit' in query:
             speak("Thanks for giving me your time")
             try:
                 root.destroy()
             except:
                 sys.exit()
 
-    elif "show note" in query:
+        elif "show note" in query:
             show_note()
         
-    elif 'create note' in query:
+        elif 'create note' in query:
             create_note()
- 
-    elif 'joke' in query:
-            speak(pyjokes.get_joke()) 
 
-    elif 'search' in query:
+        elif 'joke' in query:
+            joke_source = random.choice(['pyjokes', 'Voice Assistant/conversations/humor.yml'])
+            if joke_source == 'pyjokes':
+                joke = pyjokes.get_joke()
+            else:
+                joke = get_random_joke_from_humor_yml()
+    
+            speak(joke)
+
+        elif 'search' in query:
             search(query)
-            # done = stop()
 
 
-    elif 'close' in query:
+        elif 'close' in query:
             close_app(query)
 
-    elif 'play music' in query or 'play songs' in query or 'play another song' in query:
+        elif 'play music' in query or 'play songs' in query or 'play another song' in query:
            playMusic()
-        #    done = stop()
 
-    elif 'time' in query:
+
+        elif 'time' in query:
             strTime = datetime.datetime.now().strftime("%I:%M %p")
             speak(f"The time is {strTime}")
 
-    elif 'date' in query:
+        elif 'date' in query:
             today = datetime.date.today().strftime("%d %b, %Y")
             speak(f"Today date is {today}")
 
-    elif 'open code' in query:
+        elif 'open code' in query:
             codePath = "C:\\Microsoft VS Code\\Code.exe"
             try:
                 os.startfile(codePath)
-                # done = stop()
+
             except Exception as e:
                 print(e)
         
-    elif 'open notepad' in query:
+        elif 'open notepad' in query:
             import subprocess
             subprocess.call(['notepad.exe', 'file.txt'])
-            # done = stop()
 
-    elif 'open word' in query:
+
+        elif 'open word' in query:
            path= "C:\\Program Files (x86)\\Microsoft Office\\Office14\\WINWORD.exe"
            try:
                 os.startfile(path)
-                # done = stop()
+
            except exception as e:
             print(e)
 
-    elif 'open powerpoint' in query or 'open power point' in query:
+        elif 'open powerpoint' in query or 'open power point' in query:
            path= "C:\\Program Files (x86)\\Microsoft Office\\Office14\\POWERPNT.exe"
            try:
                 os.startfile(path)
-                # done = stop()
+
            except exception as e:
             print(e)
 
-    elif 'open excel' in query:
+        elif 'open excel' in query:
            path= "C:\\Program Files (x86)\\Microsoft Office\\Office14\\EXCEL.exe"
            try:
                 os.startfile(path)
-                # done = stop()
+
            except exception as e:
             print(e)
         
-    elif 'open chrome' in query:
+        elif 'open chrome' in query:
            path= "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe"
            try:
                 os.startfile(path)
-                # done = stop()
+
            except exception as e:
             print(e)
 
         # all open apps statements should be before the below statement
 
-    elif 'open' in query:
+        elif 'open' in query:
             openWebsite(query)
-            # done = stop()
 
-    elif 'mail' in query:
+        elif 'mail' in query:
             sendEmail()
 
-    elif "who are you" in query or 'what is your name' in query or 'about you' in query or 'what can you do' in query or 'help me' in query:
+        elif "who are you" in query or 'what is your name' in query or 'about you' in query or 'what can you do' in query or 'help me' in query:
             speak("I am your Voice Assistant")
             speak("I am able to do several tasks for you like, play music, crack some jokes, doing google searches for you, managing your computer functions and that's all on your voice command.")
 
-    elif 'shutdown' in query or 'turn off' in query :
+        elif 'shutdown' in query or 'turn off' in query :
                 shutdown()
 
-    elif 'restart' in query:
+        elif 'restart' in query:
                 restart()
 
-    elif 'log out' in query:
+        elif 'log out' in query:
                 logout()
 
-    elif 'empty recycle bin' in query:
+        elif 'empty recycle bin' in query:
             winshell.recycle_bin().empty(confirm = False, show_progress = False, sound = True)
             speak("Recycle Bin emptied")
 
-    elif "where is" in query:
+        elif "where is" in query:
             searchlocation(query)
 
-    elif 'news' in query:
+        elif 'news' in query:
            news_listen()
 
-    # elif 'sleep' in query or 'stop' in query:
-            # done = stop()
-
-    elif 'play' in query:
+        elif 'play' in query:
             playYT(query)
-            # done = stop()
 
-    elif 'calendar' in query:
+        elif 'calendar' in query:
             printcalender()
 
-    elif 'my location' in query:
+        elif 'my location' in query:
             location = mylocation()
             speak(f"Based on your IP adress, your geolocation is:{location}")
 
-    elif 'weather' in query or 'temperature' in query:
+        elif 'weather' in query or 'temperature' in query:
             city = mylocation()
             speak(f"You want to know weather of your current location {city}? or any other city?")
             cityinp = takeCommand()
@@ -481,45 +546,274 @@ def on_button_click():
             else:
                 weather(cityinp)
 
-    elif 'what is my name' in query:
+        elif 'what is my name' in query:
             with open('username.txt', 'r') as f:
                 data = f.read()
             speak(f"Your are {data}")
 
-    elif 'what is' in query:
-            query = query.replace("what is ", "")
+        elif 'tell me about' in query:
+            query = query.replace("tell me about ", "")
+            question(query)
+        
+        elif 'what do you mean by' in query:
+            query = query.replace("what do you mean by ", "")
             question(query)
 
-    elif 'who is' in query:
+        elif 'how many' in query:
+            query = query.replace("", "")
+            question(query)
+
+        elif 'how much' in query:
+            query = query.replace("", "")
+            question(query)
+
+        elif response is not None:
+            speak(response)
+
+        elif 'who is' in query:
             query = query.replace("who is ", "")
             question(query)
 
-    elif 'tell me about' in query:
-            query = query.replace("tell me about ", "")
+        elif 'what is' in query:
+            query = query.replace("what is ", "")
             question(query)
 
-    elif 'my name is ' in query:
+        
+        elif 'my name is ' in query:
             query = query.replace("my name is", "")
             with open('username.txt', 'w') as f:
                 f.write(query)
             speak(f"I will remember, Your name is{query}")    
     
+        elif 'ok' in query:
+            speak("OK!")
+        
+        elif 'yes' in query or 'yeah' in query:
+            speak("Oh I see!")
+        
+        elif 'no' in query or 'nah' in query:
+            speak("Oh okayy!")
 
-    elif 'ok' in query:
+        else:
+
+            speak("Sorry but I'm still trying to learn about this")
+      
+
+def on_send_click():
+        
+        input_data = get_input1().lower()
+        query = takeCommand(input_data)
+
+        response = get_response(query)
+
+        if 'how are you' in query or 'how you doing' in query or 'what is going on' in query:
+           how_are_you()
+           
+    
+        elif 'fine' in query or 'good' in query or 'great' in query or 'wonderful' in query or 'awesome' in query:
+            speak("I am happy listening that")
+    
+        elif 'thank you' in query or 'thanks' in query:
+            speak("It's my pleasure!")
+
+        elif 'you are ' in query:
+            speak("It's okay! I will take it as a compliment.")
+
+        elif 'exit' in query:
+            speak("Thanks for giving me your time")
+            try:
+                root.destroy()
+            except:
+                sys.exit()
+
+        elif "show note" in query:
+            show_note()
+        
+        elif 'create note' in query:
+            create_note()
+ 
+        elif 'joke' in query:
+            joke_source = random.choice(['pyjokes', 'Voice Assistant/conversations/humor.yml'])
+            if joke_source == 'pyjokes':
+                joke = pyjokes.get_joke()
+            else:
+                joke = get_random_joke_from_humor_yml()
+    
+            speak(joke)
+
+
+        elif 'search' in query:
+            search(query)
+
+
+        elif 'close' in query:
+            close_app(query)
+
+        elif 'play music' in query or 'play songs' in query or 'play another song' in query:
+           playMusic()
+
+
+        elif 'time' in query:
+            strTime = datetime.datetime.now().strftime("%I:%M %p")
+            speak(f"The time is {strTime}")
+
+        elif 'date' in query:
+            today = datetime.date.today().strftime("%d %b, %Y")
+            speak(f"Today date is {today}")
+
+        elif 'open code' in query:
+            codePath = "C:\\Microsoft VS Code\\Code.exe"
+            try:
+                os.startfile(codePath)
+
+            except Exception as e:
+                print(e)
+        
+        elif 'open notepad' in query:
+            import subprocess
+            subprocess.call(['notepad.exe', 'file.txt'])
+
+
+        elif 'open word' in query:
+           path= "C:\\Program Files (x86)\\Microsoft Office\\Office14\\WINWORD.exe"
+           try:
+                os.startfile(path)
+
+           except exception as e:
+            print(e)
+
+        elif 'open powerpoint' in query or 'open power point' in query:
+           path= "C:\\Program Files (x86)\\Microsoft Office\\Office14\\POWERPNT.exe"
+           try:
+                os.startfile(path)
+
+           except exception as e:
+            print(e)
+
+        elif 'open excel' in query:
+           path= "C:\\Program Files (x86)\\Microsoft Office\\Office14\\EXCEL.exe"
+           try:
+                os.startfile(path)
+
+           except exception as e:
+            print(e)
+        
+        elif 'open chrome' in query:
+           path= "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe"
+           try:
+                os.startfile(path)
+
+           except exception as e:
+            print(e)
+
+        # all open apps statements should be before the below statement
+
+        elif 'open' in query:
+            openWebsite(query)
+
+        elif 'mail' in query:
+            sendEmail()
+
+        elif "who are you" in query or 'what is your name' in query or 'about you' in query or 'what can you do' in query or 'help me' in query:
+            speak("I am your Voice Assistant")
+            speak("I am able to do several tasks for you like, play music, crack some jokes, doing google searches for you, managing your computer functions and that's all on your voice command.")
+
+        elif 'shutdown' in query or 'turn off' in query :
+                shutdown()
+
+        elif 'restart' in query:
+                restart()
+
+        elif 'log out' in query:
+                logout()
+
+        elif 'empty recycle bin' in query:
+            winshell.recycle_bin().empty(confirm = False, show_progress = False, sound = True)
+            speak("Recycle Bin emptied")
+
+        elif "where is" in query:
+            searchlocation(query)
+
+        elif 'news' in query:
+           news_listen()
+
+        elif 'play' in query:
+            playYT(query)
+
+        elif 'calendar' in query:
+            printcalender()
+
+        elif 'my location' in query:
+            location = mylocation()
+            speak(f"Based on your IP adress, your geolocation is:{location}")
+
+        elif 'weather' in query or 'temperature' in query:
+            city = mylocation()
+            speak(f"You want to know weather of your current location {city}? or any other city?")
+            cityinp = takeCommand()
+            if 'current location' in cityinp or 'current city' in cityinp or 'my city' in cityinp:
+                weather(city)
+            elif 'None' in cityinp:
+                speak("Say the name of the city again!")
+                cityinp = takeCommand()
+                weather(cityinp)
+                
+            else:
+                weather(cityinp)
+
+        elif 'what is my name' in query:
+            with open('username.txt', 'r') as f:
+                data = f.read()
+            speak(f"You are {data}")
+
+        elif 'tell me about' in query:
+            query = query.replace("tell me about ", "")
+            question(query)
+
+
+        elif 'what do you mean by' in query:
+            query = query.replace("what do you mean by ", "")
+            question(query)
+
+        elif 'how many' in query:
+            query = query.replace("", "")
+            question(query)
+
+        elif 'how much' in query:
+            query = query.replace("", "")
+            question(query)
+
+        elif response is not None:
+            speak(response)
+
+        elif 'who is' in query:
+            query = query.replace("who is ", "")
+            question(query)
+
+        elif 'what is' in query:
+            query = query.replace("what is ", "")
+            question(query)
+
+        elif 'my name is ' in query:
+            query = query.replace("my name is", "")
+            with open('username.txt', 'w') as f:
+                f.write(query)
+            speak(f"I will remember, Your name is{query}")
+
+        elif 'yes' in query or 'yeah' in query:
+            speak("Oh I see!")
+        
+        elif 'no' in query or 'nah' in query:
+            speak("Oh okayy!")    
+    
+        elif 'ok' in query:
             speak("OK!")
 
-    else:
-        speak("I didn't understood that!")
-
-
-# def on_start_click():
-#     global done
-#     done = False
-#     speak("Now I am awake again")
-
-
+        else:
+            speak("Sorry but I'm still trying to learn about this")
 
 root = tk.Tk()
+
 # set title
 root.title("Voice Assistant")
 # set default size
@@ -528,35 +822,36 @@ root.geometry("500x500")
 icon_path = "D:/Coding Exercises/Voice Assistant/app_icon.ico"
 root.iconbitmap(icon_path)
 
-
 # Input box
+
 
 input_text = tk.Text(root, height=10, width=50, insertbackground='white', bg="black", fg="white", font=("Arial", 15, "bold"))
 input_text.pack(side=tk.TOP, fill=tk.BOTH, expand=True, padx=10, pady=10)
 input_text.configure(bg='black')
 
+def on_enter_key_press(event):
+    on_send_click()
+
+input_text.bind("<Return>", on_enter_key_press)
+
 def clear_inbx():
     input_text.delete("1.0", "end")
 
-input_text.insert(tk.END, "Write E-Mail id of the recepient here, before asking to send email\n\n", "custom_tag")
-input_text.insert(tk.END, "*Use clear button below before entering the E-Mail", "custom_tag")
 
 input_text.tag_config("custom_tag", foreground='#FFFFFF', font=("Arial", 15, "bold"))
 
 def get_input1():
-      input_data = input_text.get("1.0", "end-1c")
-      input_text.delete("1.0", "end")
-      input_text.tag_config("custom_tag", foreground="white")
-      input_text.insert(tk.END, input_data, "custom_tag")
-      return input_data
+    input_data = input_text.get("1.0", "end-1c").strip()
+    input_text.delete("1.0", "end")
+    input_text.tag_config("custom_tag", foreground="white")
+    return input_data
 
 
-
-#clear button
+#send button
 
 bold_font = Font(family="Helvetica", size=12, weight="bold")
 
-clearinp = tk.Button(root, text="Clear", command=clear_inbx, font=bold_font, background='#40414f', foreground='white')
+clearinp = tk.Button(root, text="Send", command=on_send_click, font=bold_font, background='#40414f', foreground='white')
 clearinp.pack(padx=5, pady=5)
 clearinp.configure(cursor='hand2', width=4, height= 2)
 
@@ -564,12 +859,10 @@ clearinp.configure(cursor='hand2', width=4, height= 2)
 img = Image.open("D:\Coding Exercises\Voice Assistant\mic.png")
 img = img.resize((40, 40), Image.ANTIALIAS)
 icon = ImageTk.PhotoImage(img)
-buttonSpeak = tk.Button(root, image=icon, command=on_button_click, background='#40414f', foreground='#40414f')
+buttonSpeak = tk.Button(root, image=icon, command=on_speak_click, background='#40414f', foreground='#40414f')
 buttonSpeak.pack(padx=5,pady=5)
 buttonSpeak.configure(cursor='hand2')
 
-# start_button = tk.Button(root, text="Start", command=on_start_click)
-# start_button.pack(pady=5)
 
 #Output text box and scrollbar
 
@@ -579,7 +872,6 @@ output_frame.configure(bg='#444654')
 
 output_text = tk.Text(output_frame)
 output_text.pack(side=tk.LEFT, fill=tk.BOTH, expand=True,  padx=10, pady=10)
-
 
 scrollbar = tk.Scrollbar(output_frame)
 scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
@@ -592,8 +884,6 @@ output_text.configure(insertontime=0)
 output_text.configure(cursor='arrow', bg='black')
 output_text.tag_config("custom_tag", foreground='#FFFFFF', font=("Arial", 16, "bold"))
 
-
 root.after(500, wishMe)
-root.configure(bg='#444654') 
-# output_text.update()  
+root.configure(bg='#444654')  
 root.mainloop()
