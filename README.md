@@ -56,3 +56,9 @@ Basic OS Functionalities:
 * log out ( log out the current user )
 * empty recycle bin ( empty recycle bin )
 
+Some Screenshots are:
+![Screenshot 1](https://github.com/Pahadi10/Voice-Assistant/assets/91412189/c0241081-55e1-4eca-85a8-494eac66f8bf)
+![Screenshot 2](https://github.com/Pahadi10/Voice-Assistant/assets/91412189/82ad0765-24aa-47bf-bd4b-e70118f41315)
+![Screenshot 3](https://github.com/Pahadi10/Voice-Assistant/assets/91412189/88dbca34-ddee-418b-acea-7f49559379ac)
+![Screenshot 4](https://github.com/Pahadi10/Voice-Assistant/assets/91412189/8d83ed26-10ce-49f6-a3b8-c040c23c1b52)
+![Screenshot 5](https://github.com/Pahadi10/Voice-Assistant/assets/91412189/24ce6a05-9cab-4515-bd84-0a643fb08a50)
